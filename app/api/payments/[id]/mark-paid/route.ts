@@ -3,10 +3,11 @@ import { db } from '@/lib/vercel-db'
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await db.markAsPaid(params.id)
+    const { id } = await params
+    await db.markAsPaid(id)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error in POST /api/payments/[id]/mark-paid:', error)
