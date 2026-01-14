@@ -59,18 +59,37 @@ export default function AdminPage() {
       const trimmedLine = line.trim()
       if (!trimmedLine) continue
 
-      // Format attendu: Nom, Date (JJ/MM/AAAA), Montant, Raison
-      // Exemple: Marie Dupont, 15/03/2010, 150, Cours de danse
-      const parts = trimmedLine.split(',').map(p => p.trim())
-      
-      if (parts.length >= 3) {
-        const name = parts[0]
-        const birthDate = parts[1]
-        const amount = parseFloat(parts[2].replace('€', '').trim())
-        const reason = parts.slice(3).join(', ') || 'Paiement'
+      // Si la ligne contient des tabulations, c'est du format Excel
+      if (trimmedLine.includes('\t')) {
+        const parts = trimmedLine.split('\t').map(p => p.trim())
+        
+        if (parts.length >= 3) {
+          // Format Excel: "Nom, Prénom" [TAB] "JJ/MM/AAAA" [TAB] "Montant€"
+          const name = parts[0]
+          const birthDate = parts[1]
+          // Nettoyer le montant: enlever €, espaces, et gérer virgule/point décimal
+          const amountStr = parts[2].replace('€', '').replace(/\s/g, '').replace(',', '.')
+          const amount = parseFloat(amountStr)
+          const reason = parts.length > 3 ? parts.slice(3).join(' ') : 'Paiement'
 
-        if (name && birthDate && !isNaN(amount)) {
-          results.push({ name, birth_date: birthDate, amount, reason })
+          if (name && birthDate && !isNaN(amount)) {
+            results.push({ name, birth_date: birthDate, amount, reason })
+          }
+        }
+      } else {
+        // Format CSV avec virgules: "Nom Prénom", "JJ/MM/AAAA", "Montant", "Motif"
+        const parts = trimmedLine.split(',').map(p => p.trim())
+        
+        if (parts.length >= 3) {
+          const name = parts[0]
+          const birthDate = parts[1]
+          const amountStr = parts[2].replace('€', '').replace(/\s/g, '').replace(',', '.')
+          const amount = parseFloat(amountStr)
+          const reason = parts.length > 3 ? parts.slice(3).join(', ') : 'Paiement'
+
+          if (name && birthDate && !isNaN(amount)) {
+            results.push({ name, birth_date: birthDate, amount, reason })
+          }
         }
       }
     }
