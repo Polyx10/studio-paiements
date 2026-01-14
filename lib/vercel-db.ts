@@ -20,6 +20,25 @@ export const db = {
     }
   },
 
+  async searchPaymentsByName(query: string): Promise<Array<{ name: string; birth_date: string }>> {
+    try {
+      const sql = getSql()
+      if (query.length < 3) return []
+      
+      const searchPattern = `${query.toLowerCase()}%`
+      const rows = await sql`
+        SELECT DISTINCT name, birth_date FROM payments 
+        WHERE LOWER(name) LIKE ${searchPattern}
+        ORDER BY name
+        LIMIT 10
+      `
+      return rows as Array<{ name: string; birth_date: string }>
+    } catch (error) {
+      console.error('Error searching payments by name:', error)
+      return []
+    }
+  },
+
   async findPayment(name: string, birthDate: string): Promise<Payment | null> {
     try {
       const sql = getSql()

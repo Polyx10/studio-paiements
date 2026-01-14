@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,6 +13,10 @@ import Link from 'next/link'
 export default function ConsultationPage() {
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState('')
+  const [suggestions, setSuggestions] = useState<Array<{ name: string; birth_date: string }>>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [selectedPayment, setSelectedPayment] = useState<{ name: string; birth_date: string } | null>(null)
+  const suggestionsRef = useRef<HTMLDivElement>(null)
   const [result, setResult] = useState<{
     found: boolean
     name?: string
@@ -50,7 +54,49 @@ export default function ConsultationPage() {
     setName('')
     setBirthDate('')
     setResult(null)
+    setSuggestions([])
+    setShowSuggestions(false)
+    setSelectedPayment(null)
   }
+
+  const handleNameChange = async (value: string) => {
+    setName(value)
+    setSelectedPayment(null)
+    
+    if (value.length >= 3) {
+      try {
+        const response = await fetch(`/api/search-payments?q=${encodeURIComponent(value)}`)
+        const data = await response.json()
+        setSuggestions(data)
+        setShowSuggestions(data.length > 0)
+      } catch (error) {
+        console.error('Error fetching suggestions:', error)
+        setSuggestions([])
+      }
+    } else {
+      setSuggestions([])
+      setShowSuggestions(false)
+    }
+  }
+
+  const handleSelectSuggestion = (suggestion: { name: string; birth_date: string }) => {
+    setName(suggestion.name)
+    setBirthDate(suggestion.birth_date)
+    setSelectedPayment(suggestion)
+    setShowSuggestions(false)
+    setSuggestions([])
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
@@ -68,20 +114,40 @@ export default function ConsultationPage() {
           <CardContent>
             {!result ? (
               <form onSubmit={handleSearch} className="space-y-4">
-                <div>
+                <div className="relative">
                   <Label htmlFor="name">Nom (3 premières lettres minimum) *</Label>
                   <Input
                     id="name"
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => handleNameChange(e.target.value)}
                     placeholder="Ex: Dup (pour Dupont)"
                     className="mt-1"
                     minLength={3}
+                    autoComplete="off"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Entrez au minimum les 3 premières lettres du nom de famille
                   </p>
+                  
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div
+                      ref={suggestionsRef}
+                      className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                    >
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleSelectSuggestion(suggestion)}
+                          className="w-full text-left px-4 py-2 hover:bg-purple-50 focus:bg-purple-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-900">{suggestion.name}</div>
+                          <div className="text-sm text-gray-500">{suggestion.birth_date}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
