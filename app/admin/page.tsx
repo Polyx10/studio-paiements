@@ -44,7 +44,7 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === 'admin2026') {
+    if (password.toUpperCase() === 'STUDIO2026') {
       setIsAuthenticated(true)
     } else {
       alert('Mot de passe incorrect')
