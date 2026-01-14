@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { db } from '@/lib/api-client'
 import type { Payment } from '@/lib/types'
-import { Upload, Trash2, Download, CheckCircle, Eye, EyeOff } from 'lucide-react'
+import { Upload, Trash2, Download, CheckCircle, Eye, EyeOff, Edit } from 'lucide-react'
 import StudioLogo from '@/components/StudioLogo'
 
 export default function AdminPage() {
@@ -24,6 +24,13 @@ export default function AdminPage() {
   const [accessCode, setAccessCode] = useState('')
   const [newAccessCode, setNewAccessCode] = useState('')
   const [showAccessCodeForm, setShowAccessCodeForm] = useState(false)
+  const [sortBy, setSortBy] = useState<'name' | 'amount' | 'date'>('name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
+  const [editingBirthDate, setEditingBirthDate] = useState('')
+  const [editingAmount, setEditingAmount] = useState('')
+  const [editingReason, setEditingReason] = useState('')
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -205,6 +212,85 @@ export default function AdminPage() {
     alert('Code d\'accès mis à jour avec succès')
   }
 
+  const handleDeletePayment = async (id: string) => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce paiement ?')) {
+      await db.deletePayment(id)
+      loadData()
+    }
+  }
+
+  const handleEditPayment = (payment: Payment) => {
+    setEditingPaymentId(payment.id)
+    setEditingName(payment.name)
+    setEditingBirthDate(payment.birth_date)
+    setEditingAmount(payment.amount.toString())
+    setEditingReason(payment.reason)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingPaymentId) return
+    
+    const amount = parseFloat(editingAmount)
+    if (isNaN(amount)) {
+      alert('Veuillez entrer un montant valide')
+      return
+    }
+    
+    try {
+      const response = await fetch(`/api/payments/${editingPaymentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editingName,
+          birth_date: editingBirthDate,
+          amount,
+          reason: editingReason
+        })
+      })
+      
+      if (response.ok) {
+        setEditingPaymentId(null)
+        loadData()
+      } else {
+        alert('Erreur lors de la mise à jour')
+      }
+    } catch (error) {
+      console.error('Error updating payment:', error)
+      alert('Erreur lors de la mise à jour')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingPaymentId(null)
+    setEditingName('')
+    setEditingBirthDate('')
+    setEditingAmount('')
+    setEditingReason('')
+  }
+
+  const handleSort = (column: 'name' | 'amount' | 'date') => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(column)
+      setSortOrder('asc')
+    }
+  }
+
+  const sortedPayments = [...payments].sort((a, b) => {
+    let comparison = 0
+    
+    if (sortBy === 'name') {
+      comparison = a.name.localeCompare(b.name)
+    } else if (sortBy === 'amount') {
+      comparison = a.amount - b.amount
+    } else if (sortBy === 'date') {
+      comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    }
+    
+    return sortOrder === 'asc' ? comparison : -comparison
+  })
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 p-4">
@@ -296,38 +382,127 @@ export default function AdminPage() {
                         onCheckedChange={handleToggleAll}
                       />
                     </TableHead>
-                    <TableHead>Nom</TableHead>
+                    <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('name')}>
+                      Nom {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </TableHead>
                     <TableHead>Date de naissance</TableHead>
-                    <TableHead>Montant</TableHead>
+                    <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('amount')}>
+                      Montant {sortBy === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </TableHead>
                     <TableHead>Raison</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {payments.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedPayments.has(payment.id)}
-                          onCheckedChange={() => handleTogglePayment(payment.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{payment.name}</TableCell>
-                      <TableCell>{payment.birth_date}</TableCell>
-                      <TableCell className="font-semibold text-blue-900">{payment.amount}€</TableCell>
-                      <TableCell>{payment.reason}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => handleMarkAsPaid(payment.id)}
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Marquer payé
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {sortedPayments.map((payment) => {
+                    const isEditing = editingPaymentId === payment.id
+                    return (
+                      <TableRow key={payment.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedPayments.has(payment.id)}
+                            onCheckedChange={() => handleTogglePayment(payment.id)}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {isEditing ? (
+                            <Input
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              className="w-full"
+                            />
+                          ) : (
+                            payment.name
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isEditing ? (
+                            <Input
+                              value={editingBirthDate}
+                              onChange={(e) => setEditingBirthDate(e.target.value)}
+                              placeholder="JJ/MM/AAAA"
+                              className="w-32"
+                            />
+                          ) : (
+                            payment.birth_date
+                          )}
+                        </TableCell>
+                        <TableCell className="font-semibold text-blue-900">
+                          {isEditing ? (
+                            <Input
+                              type="number"
+                              value={editingAmount}
+                              onChange={(e) => setEditingAmount(e.target.value)}
+                              className="w-24"
+                              step="0.01"
+                            />
+                          ) : (
+                            `${payment.amount}€`
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isEditing ? (
+                            <Input
+                              value={editingReason}
+                              onChange={(e) => setEditingReason(e.target.value)}
+                              className="w-full"
+                            />
+                          ) : (
+                            payment.reason
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isEditing ? (
+                            <div className="flex gap-1 justify-end">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleSaveEdit}
+                                title="Enregistrer"
+                              >
+                                ✓
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancelEdit}
+                                title="Annuler"
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-1 justify-end">
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleMarkAsPaid(payment.id)}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Payé
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditPayment(payment)}
+                                title="Modifier"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeletePayment(payment.id)}
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             )}

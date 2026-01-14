@@ -19,6 +19,24 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const body = await request.json()
+    const payment = await db.updatePayment(id, body)
+    if (!payment) {
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
+    }
+    return NextResponse.json(payment)
+  } catch (error) {
+    console.error('Error in PATCH /api/payments/[id]:', error)
+    return NextResponse.json({ error: 'Failed to update payment' }, { status: 500 })
+  }
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
