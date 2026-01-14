@@ -81,7 +81,7 @@ export default function ConsultationPage() {
 
   const handleSelectSuggestion = (suggestion: { name: string; birth_date: string }) => {
     setName(suggestion.name)
-    setBirthDate(suggestion.birth_date)
+    // Ne pas pré-remplir la date de naissance pour des raisons de sécurité
     setSelectedPayment(suggestion)
     setShowSuggestions(false)
     setSuggestions([])
@@ -143,7 +143,6 @@ export default function ConsultationPage() {
                           className="w-full text-left px-4 py-2 hover:bg-purple-50 focus:bg-purple-50 focus:outline-none border-b border-gray-100 last:border-b-0"
                         >
                           <div className="font-medium text-gray-900">{suggestion.name}</div>
-                          <div className="text-sm text-gray-500">{suggestion.birth_date}</div>
                         </button>
                       ))}
                     </div>
