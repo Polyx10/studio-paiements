@@ -62,22 +62,26 @@ export default function ConsultationPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Consultation de votre montant</CardTitle>
             <CardDescription>
-              Entrez votre nom (ou celui de votre enfant) ainsi que la date de naissance correspondante
+              Entrez les 3 premières lettres du nom (ou celui de votre enfant) ainsi que la date de naissance correspondante
             </CardDescription>
           </CardHeader>
           <CardContent>
             {!result ? (
               <form onSubmit={handleSearch} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Nom et prénom *</Label>
+                  <Label htmlFor="name">Nom (3 premières lettres minimum) *</Label>
                   <Input
                     id="name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Ex: Marie Dupont"
+                    placeholder="Ex: Dup (pour Dupont)"
                     className="mt-1"
+                    minLength={3}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Entrez au minimum les 3 premières lettres du nom de famille
+                  </p>
                 </div>
 
                 <div>

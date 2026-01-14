@@ -23,9 +23,11 @@ export const db = {
   async findPayment(name: string, birthDate: string): Promise<Payment | null> {
     try {
       const sql = getSql()
+      // Recherche par les 3 premières lettres du nom (insensible à la casse)
+      const searchPattern = `${name.substring(0, 3).toLowerCase()}%`
       const rows = await sql`
         SELECT * FROM payments 
-        WHERE LOWER(name) = LOWER(${name}) 
+        WHERE LOWER(name) LIKE ${searchPattern}
         AND birth_date = ${birthDate}
         LIMIT 1
       `
