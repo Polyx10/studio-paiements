@@ -62,7 +62,7 @@ export default function ConsultationPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Consultation de votre montant</CardTitle>
             <CardDescription>
-              Entrez votre nom et votre date de naissance
+              Entrez votre nom (ou celui de votre enfant) ainsi que la date de naissance correspondante
             </CardDescription>
           </CardHeader>
           <CardContent>
