@@ -49,12 +49,26 @@ export default function AdminPage() {
     setAccessCode(settings)
   }
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password.toUpperCase() === 'STUDIO2026') {
-      setIsAuthenticated(true)
-    } else {
-      alert('Mot de passe incorrect')
+    
+    try {
+      const response = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      })
+      
+      const data = await response.json()
+      
+      if (data.valid) {
+        setIsAuthenticated(true)
+      } else {
+        alert('Mot de passe incorrect')
+      }
+    } catch (error) {
+      console.error('Error verifying password:', error)
+      alert('Erreur lors de la vérification du mot de passe')
     }
   }
 
