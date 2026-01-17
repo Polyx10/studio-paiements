@@ -159,6 +159,9 @@ export default function ConsultationPage() {
                     placeholder="Ex: 15/03/2010"
                     className="mt-1"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    ⚠️ Format obligatoire : <strong>JJ/MM/AAAA</strong> (n'oubliez pas les <strong>/</strong>)
+                  </p>
                 </div>
 
                 <Button type="submit" className="w-full" size="lg">
