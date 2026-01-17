@@ -356,6 +356,45 @@ export default function AdminPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle>Historique des paiements ({history.length})</CardTitle>
+            <CardDescription>
+              Paiements marqués comme réglés
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {history.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Aucun paiement dans l'historique</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Date de naissance</TableHead>
+                    <TableHead>Montant</TableHead>
+                    <TableHead>Raison</TableHead>
+                    <TableHead>Date de paiement</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {history.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell className="font-medium">{payment.name}</TableCell>
+                      <TableCell>{payment.birth_date}</TableCell>
+                      <TableCell className="font-semibold text-green-900">{payment.amount}€</TableCell>
+                      <TableCell>{payment.reason}</TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {payment.paid_date ? new Date(payment.paid_date).toLocaleString('fr-FR') : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle>Paiements en attente ({payments.length})</CardTitle>
@@ -573,45 +612,6 @@ export default function AdminPage() {
                 Importer les données
               </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Historique des paiements ({history.length})</CardTitle>
-            <CardDescription>
-              Paiements marqués comme réglés
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {history.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">Aucun paiement dans l'historique</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Date de naissance</TableHead>
-                    <TableHead>Montant</TableHead>
-                    <TableHead>Raison</TableHead>
-                    <TableHead>Date de paiement</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {history.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell className="font-medium">{payment.name}</TableCell>
-                      <TableCell>{payment.birth_date}</TableCell>
-                      <TableCell className="font-semibold text-green-900">{payment.amount}€</TableCell>
-                      <TableCell>{payment.reason}</TableCell>
-                      <TableCell className="text-sm text-gray-500">
-                        {payment.paid_date ? new Date(payment.paid_date).toLocaleString('fr-FR') : '-'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
           </CardContent>
         </Card>
 
