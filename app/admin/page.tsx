@@ -12,6 +12,7 @@ import { db } from '@/lib/api-client'
 import type { Payment } from '@/lib/types'
 import { Upload, Trash2, Download, CheckCircle, Eye, EyeOff, Edit } from 'lucide-react'
 import StudioLogo from '@/components/StudioLogo'
+import * as XLSX from 'xlsx'
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -201,18 +202,33 @@ export default function AdminPage() {
   }
 
   const handleExportPayments = () => {
-    const csv = [
-      'Nom,Date de naissance,Montant,Raison,Statut',
-      ...payments.map(p => 
-        `${p.name},${p.birth_date},${p.amount}€,${p.reason},${p.is_paid ? 'Payé' : 'Non payé'}`
-      )
-    ].join('\n')
+    // Préparer les données pour Excel
+    const data = payments.map(p => ({
+      'Nom': p.name,
+      'Date de naissance': p.birth_date,
+      'Montant': `${p.amount}€`,
+      'Raison': p.reason,
+      'Statut': p.is_paid ? 'Payé' : 'Non payé'
+    }))
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `paiements-${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
+    // Créer un nouveau classeur Excel
+    const worksheet = XLSX.utils.json_to_sheet(data)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Paiements')
+
+    // Ajuster la largeur des colonnes
+    const columnWidths = [
+      { wch: 25 }, // Nom
+      { wch: 18 }, // Date de naissance
+      { wch: 12 }, // Montant
+      { wch: 30 }, // Raison
+      { wch: 12 }  // Statut
+    ]
+    worksheet['!cols'] = columnWidths
+
+    // Générer et télécharger le fichier Excel
+    const fileName = `paiements-${new Date().toISOString().split('T')[0]}.xlsx`
+    XLSX.writeFile(workbook, fileName)
   }
 
   const handleUpdateAccessCode = async () => {
@@ -480,7 +496,7 @@ export default function AdminPage() {
                 {payments.length > 0 && (
                   <Button onClick={handleExportPayments} size="sm">
                     <Download className="w-4 h-4 mr-2" />
-                    Exporter CSV
+                    Exporter Excel
                   </Button>
                 )}
               </div>
