@@ -231,6 +231,42 @@ export default function AdminPage() {
     XLSX.writeFile(workbook, fileName)
   }
 
+  const handleExportHistory = () => {
+    // Préparer les données pour Excel
+    const data = history.map(p => ({
+      'Nom': p.name,
+      'Date de naissance': p.birth_date,
+      'Montant': `${p.amount}€`,
+      'Raison': p.reason,
+      'Date de paiement': p.paid_date ? new Date(p.paid_date).toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : '-'
+    }))
+
+    // Créer un nouveau classeur Excel
+    const worksheet = XLSX.utils.json_to_sheet(data)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Historique')
+
+    // Ajuster la largeur des colonnes
+    const columnWidths = [
+      { wch: 25 }, // Nom
+      { wch: 18 }, // Date de naissance
+      { wch: 12 }, // Montant
+      { wch: 30 }, // Raison
+      { wch: 18 }  // Date de paiement
+    ]
+    worksheet['!cols'] = columnWidths
+
+    // Générer et télécharger le fichier Excel
+    const fileName = `historique-paiements-${new Date().toISOString().split('T')[0]}.xlsx`
+    XLSX.writeFile(workbook, fileName)
+  }
+
   const handleUpdateAccessCode = async () => {
     if (!newAccessCode.trim()) {
       alert('Veuillez entrer un nouveau code d\'accès')
@@ -417,16 +453,24 @@ export default function AdminPage() {
                   Paiements marqués comme réglés
                 </CardDescription>
               </div>
-              {selectedHistoryCount > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeleteSelectedHistory}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Supprimer ({selectedHistoryCount})
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {selectedHistoryCount > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteSelectedHistory}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Supprimer ({selectedHistoryCount})
+                  </Button>
+                )}
+                {history.length > 0 && (
+                  <Button onClick={handleExportHistory} size="sm">
+                    <Download className="w-4 h-4 mr-2" />
+                    Exporter Excel
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
