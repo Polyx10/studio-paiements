@@ -31,6 +31,8 @@ export default function AdminPage() {
   const [editingBirthDate, setEditingBirthDate] = useState('')
   const [editingAmount, setEditingAmount] = useState('')
   const [editingReason, setEditingReason] = useState('')
+  const [selectedHistory, setSelectedHistory] = useState<Set<string>>(new Set())
+  const [selectedHistoryCount, setSelectedHistoryCount] = useState(0)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -282,6 +284,42 @@ export default function AdminPage() {
     setEditingReason('')
   }
 
+  const handleToggleHistory = (id: string, checked: boolean | "indeterminate") => {
+    const newSelected = new Set(selectedHistory)
+    if (checked === true) {
+      newSelected.add(id)
+    } else {
+      newSelected.delete(id)
+    }
+    setSelectedHistory(newSelected)
+    setSelectedHistoryCount(newSelected.size)
+  }
+
+  const handleToggleAllHistory = (checked: boolean | "indeterminate") => {
+    if (checked === true) {
+      const newSet = new Set(history.map(p => p.id))
+      setSelectedHistory(newSet)
+      setSelectedHistoryCount(newSet.size)
+    } else {
+      setSelectedHistory(new Set())
+      setSelectedHistoryCount(0)
+    }
+  }
+
+  const handleDeleteSelectedHistory = async () => {
+    if (selectedHistory.size === 0) {
+      alert('Aucun paiement sélectionné')
+      return
+    }
+
+    if (confirm(`Supprimer ${selectedHistory.size} paiement(s) de l'historique ?`)) {
+      await db.deletePayments(Array.from(selectedHistory))
+      setSelectedHistory(new Set())
+      setSelectedHistoryCount(0)
+      await loadData()
+    }
+  }
+
   const handleSort = (column: 'name' | 'amount' | 'date') => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
@@ -356,10 +394,24 @@ export default function AdminPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Historique des paiements ({history.length})</CardTitle>
-            <CardDescription>
-              Paiements marqués comme réglés
-            </CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Historique des paiements ({history.length})</CardTitle>
+                <CardDescription>
+                  Paiements marqués comme réglés
+                </CardDescription>
+              </div>
+              {selectedHistoryCount > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteSelectedHistory}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Supprimer ({selectedHistoryCount})
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {history.length === 0 ? (
@@ -368,6 +420,12 @@ export default function AdminPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedHistory.size === history.length && history.length > 0}
+                        onCheckedChange={(checked) => handleToggleAllHistory(checked)}
+                      />
+                    </TableHead>
                     <TableHead>Nom</TableHead>
                     <TableHead>Date de naissance</TableHead>
                     <TableHead>Montant</TableHead>
@@ -378,6 +436,12 @@ export default function AdminPage() {
                 <TableBody>
                   {history.map((payment) => (
                     <TableRow key={payment.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedHistory.has(payment.id)}
+                          onCheckedChange={(checked) => handleToggleHistory(payment.id, checked)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{payment.name}</TableCell>
                       <TableCell>{payment.birth_date}</TableCell>
                       <TableCell className="font-semibold text-green-900">{payment.amount}€</TableCell>
