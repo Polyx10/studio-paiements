@@ -25,8 +25,10 @@ export default function AdminPage() {
   const [accessCode, setAccessCode] = useState('')
   const [newAccessCode, setNewAccessCode] = useState('')
   const [showAccessCodeForm, setShowAccessCodeForm] = useState(false)
-  const [sortBy, setSortBy] = useState<'name' | 'amount' | 'date'>('name')
+  const [sortBy, setSortBy] = useState<'name' | 'amount' | 'date' | 'reason'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [historySortBy, setHistorySortBy] = useState<'name' | 'amount' | 'date' | 'reason'>('name')
+  const [historySortOrder, setHistorySortOrder] = useState<'asc' | 'desc'>('asc')
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
   const [editingBirthDate, setEditingBirthDate] = useState('')
@@ -372,12 +374,21 @@ export default function AdminPage() {
     }
   }
 
-  const handleSort = (column: 'name' | 'amount' | 'date') => {
+  const handleSort = (column: 'name' | 'amount' | 'date' | 'reason') => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
     } else {
       setSortBy(column)
       setSortOrder('asc')
+    }
+  }
+
+  const handleHistorySort = (column: 'name' | 'amount' | 'date' | 'reason') => {
+    if (historySortBy === column) {
+      setHistorySortOrder(historySortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setHistorySortBy(column)
+      setHistorySortOrder('asc')
     }
   }
 
@@ -390,9 +401,27 @@ export default function AdminPage() {
       comparison = a.amount - b.amount
     } else if (sortBy === 'date') {
       comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    } else if (sortBy === 'reason') {
+      comparison = a.reason.localeCompare(b.reason)
     }
     
     return sortOrder === 'asc' ? comparison : -comparison
+  })
+
+  const sortedHistory = [...history].sort((a, b) => {
+    let comparison = 0
+    
+    if (historySortBy === 'name') {
+      comparison = a.name.localeCompare(b.name)
+    } else if (historySortBy === 'amount') {
+      comparison = a.amount - b.amount
+    } else if (historySortBy === 'date') {
+      comparison = new Date(a.paid_date || a.created_at).getTime() - new Date(b.paid_date || b.created_at).getTime()
+    } else if (historySortBy === 'reason') {
+      comparison = a.reason.localeCompare(b.reason)
+    }
+    
+    return historySortOrder === 'asc' ? comparison : -comparison
   })
 
   if (!isAuthenticated) {
@@ -486,15 +515,23 @@ export default function AdminPage() {
                         onCheckedChange={(checked) => handleToggleAllHistory(checked)}
                       />
                     </TableHead>
-                    <TableHead>Nom</TableHead>
+                    <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleHistorySort('name')}>
+                      Nom {historySortBy === 'name' && (historySortOrder === 'asc' ? '↑' : '↓')}
+                    </TableHead>
                     <TableHead>Date de naissance</TableHead>
-                    <TableHead>Montant</TableHead>
-                    <TableHead>Raison</TableHead>
-                    <TableHead>Date de paiement</TableHead>
+                    <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleHistorySort('amount')}>
+                      Montant {historySortBy === 'amount' && (historySortOrder === 'asc' ? '↑' : '↓')}
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleHistorySort('reason')}>
+                      Raison {historySortBy === 'reason' && (historySortOrder === 'asc' ? '↑' : '↓')}
+                    </TableHead>
+                    <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleHistorySort('date')}>
+                      Date de paiement {historySortBy === 'date' && (historySortOrder === 'asc' ? '↑' : '↓')}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history.map((payment) => (
+                  {sortedHistory.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell>
                         <Checkbox
@@ -566,7 +603,9 @@ export default function AdminPage() {
                     <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('amount')}>
                       Montant {sortBy === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
                     </TableHead>
-                    <TableHead>Raison</TableHead>
+                    <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('reason')}>
+                      Raison {sortBy === 'reason' && (sortOrder === 'asc' ? '↑' : '↓')}
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
