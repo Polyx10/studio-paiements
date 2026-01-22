@@ -407,6 +407,11 @@ export default function AdminPage() {
       comparison = a.reason.localeCompare(b.reason)
     }
     
+    // Tri secondaire par date si le tri principal n'est pas par date
+    if (comparison === 0 && sortBy !== 'date') {
+      comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    }
+    
     return sortOrder === 'asc' ? comparison : -comparison
   })
 
@@ -421,6 +426,11 @@ export default function AdminPage() {
       comparison = new Date(a.paid_date || a.created_at).getTime() - new Date(b.paid_date || b.created_at).getTime()
     } else if (historySortBy === 'reason') {
       comparison = a.reason.localeCompare(b.reason)
+    }
+    
+    // Tri secondaire par date de paiement si le tri principal n'est pas par date
+    if (comparison === 0 && historySortBy !== 'date') {
+      comparison = new Date(a.paid_date || a.created_at).getTime() - new Date(b.paid_date || b.created_at).getTime()
     }
     
     return historySortOrder === 'asc' ? comparison : -comparison
