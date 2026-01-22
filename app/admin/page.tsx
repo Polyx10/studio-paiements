@@ -8,11 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { db } from '@/lib/api-client'
+import { db, setAdminToken } from '@/lib/api-client'
 import type { Payment } from '@/lib/types'
 import { Upload, Trash2, Download, CheckCircle, Eye, EyeOff, Edit } from 'lucide-react'
 import StudioLogo from '@/components/StudioLogo'
 import * as XLSX from 'xlsx'
+import { sanitizeForExcel } from '@/lib/auth'
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -67,6 +68,7 @@ export default function AdminPage() {
       const data = await response.json()
       
       if (data.valid) {
+        setAdminToken(password)
         setIsAuthenticated(true)
       } else {
         alert('Mot de passe incorrect')
@@ -204,12 +206,12 @@ export default function AdminPage() {
   }
 
   const handleExportPayments = () => {
-    // Préparer les données pour Excel
+    // Préparer les données pour Excel avec sanitization contre CSV Injection
     const data = payments.map(p => ({
-      'Nom': p.name,
-      'Date de naissance': p.birth_date,
+      'Nom': sanitizeForExcel(p.name),
+      'Date de naissance': sanitizeForExcel(p.birth_date),
       'Montant': `${p.amount}€`,
-      'Raison': p.reason,
+      'Raison': sanitizeForExcel(p.reason),
       'Statut': p.is_paid ? 'Payé' : 'Non payé'
     }))
 
@@ -234,12 +236,12 @@ export default function AdminPage() {
   }
 
   const handleExportHistory = () => {
-    // Préparer les données pour Excel
+    // Préparer les données pour Excel avec sanitization contre CSV Injection
     const data = history.map(p => ({
-      'Nom': p.name,
-      'Date de naissance': p.birth_date,
+      'Nom': sanitizeForExcel(p.name),
+      'Date de naissance': sanitizeForExcel(p.birth_date),
       'Montant': `${p.amount}€`,
-      'Raison': p.reason,
+      'Raison': sanitizeForExcel(p.reason),
       'Date de paiement': p.paid_date ? new Date(p.paid_date).toLocaleString('fr-FR', {
         day: '2-digit',
         month: '2-digit',

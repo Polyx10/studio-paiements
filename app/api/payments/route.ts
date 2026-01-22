@@ -1,7 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/vercel-db'
+import { verifyAdminAuth, unauthorizedResponse, validatePaymentData } from '@/lib/auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const isAuthenticated = await verifyAdminAuth(request)
+  if (!isAuthenticated) {
+    return unauthorizedResponse()
+  }
+
   try {
     const payments = await db.getPayments()
     return NextResponse.json(payments)
@@ -11,9 +17,20 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const isAuthenticated = await verifyAdminAuth(request)
+  if (!isAuthenticated) {
+    return unauthorizedResponse()
+  }
+
   try {
     const body = await request.json()
+    
+    const validation = validatePaymentData(body)
+    if (!validation.valid) {
+      return NextResponse.json({ error: 'Validation failed', details: validation.errors }, { status: 400 })
+    }
+    
     const payment = await db.addPayment(body)
     return NextResponse.json(payment)
   } catch (error) {
