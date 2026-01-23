@@ -150,17 +150,26 @@ export default function ConsultationPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="birthDate">Date de naissance (JJ/MM/AAAA) *</Label>
+                  <Label htmlFor="birthDate">Date de naissance *</Label>
                   <Input
                     id="birthDate"
-                    type="text"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    placeholder="Ex: 15/03/2010"
+                    type="date"
+                    onChange={(e) => {
+                      const dateValue = e.target.value
+                      if (dateValue) {
+                        // Convertir YYYY-MM-DD (HTML5) en DD/MM/YYYY (format base de données)
+                        const [year, month, day] = dateValue.split('-')
+                        setBirthDate(`${day}/${month}/${year}`)
+                      } else {
+                        setBirthDate('')
+                      }
+                    }}
                     className="mt-1"
+                    max={new Date().toISOString().split('T')[0]}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    ⚠️ Format obligatoire : <strong>JJ/MM/AAAA</strong> (n'oubliez pas les <strong>/</strong>)
+                    Utilisez le calendrier pour sélectionner la date
+                    {birthDate && ` - Date sélectionnée : ${birthDate}`}
                   </p>
                 </div>
 
