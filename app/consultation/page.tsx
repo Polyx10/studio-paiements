@@ -9,10 +9,12 @@ import { db } from '@/lib/api-client'
 import StudioLogo from '@/components/StudioLogo'
 import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import DatePicker from '@/components/DatePicker'
 
 export default function ConsultationPage() {
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState('')
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [suggestions, setSuggestions] = useState<Array<{ name: string; birth_date: string }>>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedPayment, setSelectedPayment] = useState<{ name: string; birth_date: string } | null>(null)
@@ -151,24 +153,25 @@ export default function ConsultationPage() {
 
                 <div>
                   <Label htmlFor="birthDate">Date de naissance *</Label>
-                  <Input
-                    id="birthDate"
-                    type="date"
-                    onChange={(e) => {
-                      const dateValue = e.target.value
-                      if (dateValue) {
-                        // Convertir YYYY-MM-DD (HTML5) en DD/MM/YYYY (format base de données)
-                        const [year, month, day] = dateValue.split('-')
+                  <DatePicker
+                    selected={selectedDate}
+                    onChange={(date) => {
+                      setSelectedDate(date)
+                      if (date) {
+                        // Convertir Date en DD/MM/YYYY
+                        const day = String(date.getDate()).padStart(2, '0')
+                        const month = String(date.getMonth() + 1).padStart(2, '0')
+                        const year = date.getFullYear()
                         setBirthDate(`${day}/${month}/${year}`)
                       } else {
                         setBirthDate('')
                       }
                     }}
+                    placeholderText="Sélectionner la date"
                     className="mt-1"
-                    max={new Date().toISOString().split('T')[0]}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Utilisez le calendrier pour sélectionner la date
+                    Utilisez les menus déroulants pour sélectionner rapidement l'année, le mois et le jour
                     {birthDate && ` - Date sélectionnée : ${birthDate}`}
                   </p>
                 </div>
